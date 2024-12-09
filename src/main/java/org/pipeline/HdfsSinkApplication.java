@@ -34,6 +34,7 @@ public class HdfsSinkApplication {
         for (int i = 0; i < CONSUMER_COUNT; i++) {
             CONSUMER_WORKERS.add(new ConsumerWorker(properties,TOPIC_NAME,i));
         }
+        CONSUMER_WORKERS.forEach(executorService::execute);
     }
 
     static class ShutDownThread extends Thread {
