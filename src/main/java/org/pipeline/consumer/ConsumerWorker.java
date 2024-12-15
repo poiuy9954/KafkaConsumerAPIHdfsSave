@@ -12,7 +12,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.protocol.types.Field;
 
 import java.time.Duration;
 import java.util.*;
@@ -74,11 +73,12 @@ public class ConsumerWorker implements Runnable {
         if(bufferString.get(partitionNo).size()>0){
             try {
 //              color-{파티션no}-{offset}.log
-                String fileName = "/data/color-"+partitionNo+"-"+currentFileOffset.get(partitionNo)+".log";
+                String fileName = "/Users/gimjinho/hadoop_data/data/color-"+partitionNo+"-"+currentFileOffset.get(partitionNo)+".log";
                 Configuration conf = new Configuration();
-                conf.set("fs.defaultFs","hdfs://localhost:9000/");
+                conf.set("fs.defaultFs","hdfs://localhost:9000");
                 FileSystem hdfsFileSystem = FileSystem.get(conf);
-                FSDataOutputStream fileOutputStream = hdfsFileSystem.create(new Path(fileName));
+                Path path = new Path(fileName);
+                FSDataOutputStream fileOutputStream = hdfsFileSystem.create(path);
                 fileOutputStream.writeBytes(StringUtils.join(bufferString.get(partitionNo), "\n"));
                 fileOutputStream.close();
 
@@ -90,6 +90,7 @@ public class ConsumerWorker implements Runnable {
     }
 
     private void addHdfsFileBuffer(ConsumerRecord<String, String> record) {
+        log.info("addHdfsFileBuffer - record {}", record.value());
         List<String> buffer = bufferString.getOrDefault(record.partition(), new ArrayList<>());
         buffer.add(record.value());
         bufferString.put(record.partition(), buffer);
@@ -99,7 +100,7 @@ public class ConsumerWorker implements Runnable {
         }
     }
 
-    public void stopAndWakeup(){
+    public void  stopAndWakeup(){
         log.info("stopAndWakeup");
         consumer.wakeup();
         saveRemainBufferToHdfsFile();
